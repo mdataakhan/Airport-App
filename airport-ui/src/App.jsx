@@ -57,7 +57,7 @@ function App() {
   const fetchAirports = () => {
     setLoading(true);
     axios
-      .get(`http://localhost:8080/api/airports/page?page=${page}&size=${pageSize}&sortBy=${sortField}`)
+      .get(`https://airport-service.cfapps.us10-001.hana.ondemand.com/api/airports/page?page=${page}&size=${pageSize}&sortBy=${sortField}`)
       .then((response) => {
         const fetchedAirports = response.data.content;
         setAirports(fetchedAirports);
@@ -80,7 +80,7 @@ function App() {
     }
     setLoading(true);
     axios
-      .get(`http://localhost:8080/api/airports/filter-by-name?name=${searchName}`)
+      .get(`https://airport-service.cfapps.us10-001.hana.ondemand.com/api/airports/filter-by-name?name=${searchName}`)
       .then((response) => {
         setAirports(response.data);
         setLoading(false);
