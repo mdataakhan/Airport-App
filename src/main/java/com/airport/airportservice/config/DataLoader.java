@@ -32,7 +32,7 @@ public class DataLoader {
     public void loadAirportData() {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-            InputStream inputStream = getClass().getClassLoader().getResourceAsStream("data/airports-sample.json");
+            InputStream inputStream = getClass().getClassLoader().getResourceAsStream("data/airports.json");
 
             if (inputStream != null) {
                 Map<String, Airport> airportMap = objectMapper.readValue(inputStream,

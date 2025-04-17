@@ -16,7 +16,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/airports")
-@CrossOrigin(origins = "*") // Allows access from any frontend (like React)
+@CrossOrigin(origins = "*") // Allows access from  frontend
 public class AirportController {
 
     private final AirportService airportService;
@@ -54,15 +54,15 @@ public class AirportController {
 
     @GetMapping("/{icao}")
     public ResponseEntity<?> getAirportById(@PathVariable String icao) {
-        // Validate ICAO code: exactly 4 uppercase letters, no digits/special chars
-        if (!icao.matches("^[A-Z]{4}$")) {
+        // Accepting only 4 chars including digits as well without any special character
+        if (!icao.matches("^[A-Z0-9]{4}$")) {
             Map<String, String> error = new HashMap<>();
             error.put("errorType", "InvalidICAOCode");
-            error.put("message", "ICAO code must be exactly 4 uppercase letters (A-Z) with no digits or special characters.");
+            error.put("message", "ICAO code must be exactly 4 characters long and contain uppercase letters (A-Z) and digits (0-9). No special characters allowed.");
             return ResponseEntity.badRequest().body(error);
         }
 
-        Optional<Airport> airport = airportService.getAirportById(icao);
+        Optional<Airport> airport = airportService.getAirportById(icao.toUpperCase());
 
         if (airport.isPresent()) {
             return ResponseEntity.ok(airport.get());
