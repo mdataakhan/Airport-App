@@ -10,7 +10,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class AirportService {
@@ -27,16 +30,7 @@ public class AirportService {
         return airportRepository.findAll(pageable);
     }
 
-    public List<Airport> getAllAirports() {
-        List<Airport> airports = airportRepository.findAll();
-        airports.forEach(this::populateDerivedFields);
-        return airports;
-    }
-
-    private void populateDerivedFields(Airport airport) {
-        airport.setRegion(airport.getRegion()); // triggers the getter
-    }
-
+    // This is for sorting functionality and only allows for field name / city / state / country
     public List<Airport> getAllAirports(String sortBy) {
         if (sortBy == null || sortBy.isEmpty()) {
             return airportRepository.findAll();
@@ -50,15 +44,17 @@ public class AirportService {
         return airportRepository.findAll(Sort.by(sortBy));
     }
 
-
+    //This is to filter search by given name can be substring of name
     public List<Airport> filterByName(String name) {
         return airportRepository.findByNameContainingIgnoreCase(name);
     }
 
+    //This is to get airport by ICAO
     public Optional<Airport> getAirportById(String icao) {
         return airportRepository.findById(icao);
     }
 
+    //This is to add Airport details with param handling
     public Airport addAirport(Airport airport) {
         String icao = airport.getIcao();
 
@@ -77,34 +73,67 @@ public class AirportService {
         if (airport.getName() == null) airport.setName("");
         if (airport.getCity() == null) airport.setCity("");
         if (airport.getState() == null) airport.setState("");
-        if (airport.getCountry() == null) airport.setCountry("");
+        if (airport.getCountry() == null) {
+            airport.setCountry("");
+        } else if (!airport.getCountry().matches("^[A-Z]{2}$")) {
+            throw new IllegalArgumentException("Country code should be two letters in uppercase.");
+        }
         if (airport.getTz() == null) airport.setTz("");
         if (airport.getElevation() == null) airport.setElevation(0);
         if (airport.getLat() == null) airport.setLat(0.0);
         if (airport.getLon() == null) airport.setLon(0.0);
 
-        // Validate latitude
+        // This is to ensure latitude constraints
         if (airport.getLat() < -90.0 || airport.getLat() > 90.0) {
             throw new IllegalArgumentException("Latitude must be in the range [-90, +90].");
         }
 
-        // Validate longitude
+        // This is to ensure longitude constraints
         if (airport.getLon() < -180.0 || airport.getLon() > 180.0) {
             throw new IllegalArgumentException("Longitude must be in the range [-180, +180].");
-        }
-
-        // Validate elevation
-        if (airport.getElevation() < 0) {
-            throw new IllegalArgumentException("Elevation cannot be negative.");
         }
 
         return airportRepository.save(airport);
     }
 
-
-
-
+    //This is to delete Airport Entry By Icao if lets say it doesnot exist will throw an error
     public void deleteAirport(String icao) {
-        airportRepository.deleteById(icao);
+        if(airportRepository.existsById(icao)) {
+            airportRepository.deleteById(icao);
+        }else {
+            throw new IllegalArgumentException("No Data found associated with given ICAO: " + icao);
+        }
     }
+
+    // To find average elevation on entire data
+    public Map<String, Double> getAverageElevationPerCountry() {
+        List<Airport> airports = airportRepository.findAll();
+
+        return airports.stream()
+                .filter(a -> a.getCountry() != null && !a.getCountry().isEmpty())
+                .collect(Collectors.groupingBy(
+                        Airport::getCountry,
+                        Collectors.averagingInt(Airport::getElevation)
+                ));
+    }
+
+    //To get List of Airports without IATO code
+    public List<Airport> getAirportsWithoutIataCode() {
+        return airportRepository.findAll().stream()
+                .filter(a -> a.getIata() == null || a.getIata().isBlank())
+                .collect(Collectors.toList());
+    }
+
+    //This is to find 10 most common Time Zones
+    public List<Map.Entry<String, Long>> getTop10TimeZones() {
+        return airportRepository.findAll().stream()
+                .filter(a -> a.getTz() != null && !a.getTz().isBlank())
+                .collect(Collectors.groupingBy(Airport::getTz, Collectors.counting()))
+                .entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(10)
+                .collect(Collectors.toList());
+    }
+
+
 }

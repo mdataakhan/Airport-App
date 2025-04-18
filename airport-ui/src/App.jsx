@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import './styles.css'; // Import custom CSS
+
+
+const BASE_URL = 'https://airport-service.cfapps.us10-001.hana.ondemand.com/api/airports';
 
 function App() {
   const [airports, setAirports] = useState([]);
@@ -10,44 +14,26 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [searchName, setSearchName] = useState('');
   const [sortField, setSortField] = useState('');
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newAirport, setNewAirport] = useState({
+    icao: '',
+    iata: '',
+    name: '',
+    city: '',
+    state: '',
+    country: '',
+    tz: '',
+    elevation: '',
+    lat: '',
+    lon: ''
+  });
+  const [addError, setAddError] = useState('');
 
-  // State for analysis results
-  const [averageElevations, setAverageElevations] = useState([]);
-  const [airportsWithoutIATA, setAirportsWithoutIATA] = useState([]);
-  const [mostCommonTimeZones, setMostCommonTimeZones] = useState([]);
 
-  // Analysis functions (unchanged)
-  const calculateAverageElevation = (airports) => {
-    const countryElevations = {};
-    airports.forEach((airport) => {
-      const { country, elevation } = airport;
-      if (!countryElevations[country]) {
-        countryElevations[country] = { totalElevation: 0, count: 0 };
-      }
-      countryElevations[country].totalElevation += elevation;
-      countryElevations[country].count += 1;
-    });
-    return Object.keys(countryElevations).map((country) => ({
-      country,
-      averageElevation: countryElevations[country].totalElevation / countryElevations[country].count,
-    }));
-  };
+  // Fields that are allowed for sorting
+  const sortableFields = ['name', 'city', 'state', 'country'];
+  const navigate = useNavigate();
 
-  const findAirportsWithoutIATA = (airports) => {
-    return airports.filter((airport) => !airport.iata || airport.iata.trim() === '');
-  };
-
-  const findMostCommonTimeZones = (airports) => {
-    const timeZoneCount = {};
-    airports.forEach((airport) => {
-      const { tz } = airport;
-      timeZoneCount[tz] = (timeZoneCount[tz] || 0) + 1;
-    });
-    return Object.keys(timeZoneCount)
-      .map((tz) => ({ tz, count: timeZoneCount[tz] }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10);
-  };
 
   // Fetch airports
   useEffect(() => {
@@ -57,14 +43,11 @@ function App() {
   const fetchAirports = () => {
     setLoading(true);
     axios
-      .get(`https://airport-service.cfapps.us10-001.hana.ondemand.com/api/airports/page?page=${page}&size=${pageSize}&sortBy=${sortField}`)
+      .get(`${BASE_URL}/page?page=${page}&size=${pageSize}&sortBy=${sortField}`)
       .then((response) => {
         const fetchedAirports = response.data.content;
         setAirports(fetchedAirports);
         setTotalPages(response.data.totalPages);
-        setAverageElevations(calculateAverageElevation(fetchedAirports));
-        setAirportsWithoutIATA(findAirportsWithoutIATA(fetchedAirports));
-        setMostCommonTimeZones(findMostCommonTimeZones(fetchedAirports));
         setLoading(false);
       })
       .catch((error) => {
@@ -80,7 +63,7 @@ function App() {
     }
     setLoading(true);
     axios
-      .get(`https://airport-service.cfapps.us10-001.hana.ondemand.com/api/airports/filter-by-name?name=${searchName}`)
+      .get(`${BASE_URL}/filter-by-name?name=${searchName}`)
       .then((response) => {
         setAirports(response.data);
         setLoading(false);
@@ -92,12 +75,57 @@ function App() {
   };
 
   const handleSort = (field) => {
-    setSortField(field);
+    // Apply sorting only on the allowed fields
+    if (sortableFields.includes(field)) {
+      setSortField(field);
+    }
   };
+
+  const handleAddAirport = () => {
+    setAddError('');
+    // Convert elevation, lat, lon to appropriate types
+    const payload = {
+      ...newAirport,
+      elevation: parseInt(newAirport.elevation) || 0,
+      lat: parseFloat(newAirport.lat) || 0.0,
+      lon: parseFloat(newAirport.lon) || 0.0,
+    };
+
+    axios.post(BASE_URL, payload)
+      .then(() => {
+        setShowAddForm(false);
+        setNewAirport({
+          icao: '',
+          iata: '',
+          name: '',
+          city: '',
+          state: '',
+          country: '',
+          tz: '',
+          elevation: '',
+          lat: '',
+          lon: ''
+        });
+        fetchAirports(); // Refresh the list
+      })
+      .catch((error) => {
+        const msg = error.response?.data?.message || error.message;
+        setAddError(msg);
+      });
+  };
+
+
+
 
   return (
     <div className="container">
       <h1>Airport Dashboard</h1>
+
+      <div className="top-buttons">
+        <button className="analytics-btn" onClick={() => navigate('/analytics')}>
+          Go to Analytics
+        </button>
+      </div>
 
       {/* Search Bar */}
       <div className="search-bar">
@@ -112,7 +140,32 @@ function App() {
           />
         </div>
         <button onClick={handleSearch}>Search</button>
+        <button onClick={() => setShowAddForm(true)}>Add Airport</button>
       </div>
+
+      {showAddForm && (
+        <div className="add-airport-form">
+          <h3>Add New Airport</h3>
+          <div className="form-grid">
+            {Object.entries(newAirport).map(([key, value]) => (
+              <div key={key}>
+                <label>{key.toUpperCase()}</label>
+                <input
+                  type="text"
+                  value={value}
+                  onChange={(e) => setNewAirport({ ...newAirport, [key]: e.target.value })}
+                />
+              </div>
+            ))}
+          </div>
+          {addError && <div className="error-msg">{addError}</div>}
+          <div className="form-actions">
+            <button onClick={handleAddAirport}>Submit</button>
+            <button onClick={() => setShowAddForm(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
 
       {loading ? (
         <div className="loader">Loading...</div>
@@ -125,7 +178,11 @@ function App() {
                 <tr>
                   {['icao', 'iata', 'name', 'city', 'state', 'country', 'elevation', 'lat', 'lon', 'tz', 'region'].map(
                     (field) => (
-                      <th key={field} onClick={() => handleSort(field)}>
+                      <th
+                        key={field}
+                        onClick={() => handleSort(field)}
+                        className={sortableFields.includes(field) ? 'sortable' : ''}
+                      >
                         {field.charAt(0).toUpperCase() + field.slice(1)}
                         {sortField === field && <i className="fas fa-sort"></i>}
                       </th>
@@ -167,48 +224,6 @@ function App() {
             <button disabled={page + 1 === totalPages} onClick={() => setPage(page + 1)}>
               Next <i className="fas fa-chevron-right"></i>
             </button>
-          </div>
-
-          {/* Analysis Sections */}
-          <div className="analysis">
-            <div className="analysis-card">
-              <h2>
-                <i className="fas fa-globe"></i> Average Elevation per Country
-              </h2>
-              <ul>
-                {averageElevations.map((elevation) => (
-                  <li key={elevation.country}>
-                    {elevation.country}: {elevation.averageElevation.toFixed(2)} ft
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="analysis-card">
-              <h2>
-                <i className="fas fa-plane"></i> Airports Without IATA Codes
-              </h2>
-              <ul>
-                {airportsWithoutIATA.map((airport) => (
-                  <li key={airport.icao}>
-                    {airport.name} ({airport.city}, {airport.country})
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="analysis-card">
-              <h2>
-                <i className="fas fa-clock"></i> Top 10 Time Zones
-              </h2>
-              <ul>
-                {mostCommonTimeZones.map((zone) => (
-                  <li key={zone.tz}>
-                    {zone.tz}: {zone.count} airports
-                  </li>
-                ))}
-              </ul>
-            </div>
           </div>
         </>
       )}

@@ -11,20 +11,21 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    //This will catch only IllegalArgumentException and will set the response as ValidationError and given msg  with 400 error code
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException ex) {
         Map<String, String> error = new HashMap<>();
-        error.put("errorType", "ValidationError");
+        error.put("error", "ValidationError");
         error.put("message", ex.getMessage());
         return ResponseEntity.badRequest().body(error);
     }
 
-    // Optional: Catch all other unexpected exceptions without trace
+    // This will catch all exception apart from the above one and will remove internal details like stack trace and all.
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGenericException(Exception ex) {
         Map<String, String> error = new HashMap<>();
-        error.put("errorType", "ServerError");
-        error.put("message", "An unexpected error occurred.");
+        error.put("error", ex.getClass().getSimpleName());
+        error.put("message", ex.getMessage() != null ? ex.getMessage() : "No message available");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 }
