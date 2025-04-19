@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './styles.css'; // Import custom CSS
+import { BASE_URL } from './config';
 
 
-const BASE_URL = 'https://airport-service.cfapps.us10-001.hana.ondemand.com/api/airports';
+
+//const BASE_URL = 'https://airport-service.cfapps.us10-001.hana.ondemand.com/api/airports';
 
 function App() {
   const [airports, setAirports] = useState([]);

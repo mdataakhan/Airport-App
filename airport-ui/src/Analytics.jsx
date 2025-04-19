@@ -6,8 +6,9 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from 'recharts';
+import { BASE_URL } from './config';
 
-const BASE_URL = 'https://airport-service.cfapps.us10-001.hana.ondemand.com/api/airports';
+//const BASE_URL = 'https://airport-service.cfapps.us10-001.hana.ondemand.com/api/airports';
 
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#8dd1e1', '#a4de6c', '#d0ed57', '#d62728'];
 
