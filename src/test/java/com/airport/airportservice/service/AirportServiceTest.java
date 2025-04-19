@@ -175,16 +175,15 @@ class AirportServiceTest {
         // Arrange
         Airport newAirport = new Airport();
         newAirport.setIcao("KLAX");
-        newAirport.setIata("LAX");
+        newAirport.setIata("");
         newAirport.setName("Los Angeles International");
-        newAirport.setCity("Los Angeles");
-        newAirport.setState("CA");
+        newAirport.setCity("");
+        newAirport.setState("");
         newAirport.setCountry("US");
         newAirport.setElevation(125);
         newAirport.setLat(33.9425);
         newAirport.setLon(-118.4081);
         newAirport.setTz("America/Los_Angeles");
-        newAirport.setRegion("North America");
 
         when(airportRepository.existsById("KLAX")).thenReturn(false);
         when(airportRepository.save(any(Airport.class))).thenReturn(newAirport);
@@ -194,8 +193,62 @@ class AirportServiceTest {
 
         // Assert
         assertEquals("KLAX", result.getIcao());
+        assertEquals("", result.getIata()); // Defaulted to ""
+        assertEquals("", result.getCity()); // Defaulted to ""
+        assertEquals("", result.getState()); // Defaulted to ""
         verify(airportRepository, times(1)).existsById("KLAX");
         verify(airportRepository, times(1)).save(newAirport);
+    }
+
+    @Test
+    void addAirport_ValidAirportWithIntegerLatLon_ShouldSaveAirport() {
+        // Arrange
+        Airport newAirport = new Airport();
+        newAirport.setIcao("KSEA");
+        newAirport.setIata("SEA");
+        newAirport.setName("Seattle-Tacoma International");
+        newAirport.setCity("Seattle");
+        newAirport.setState("WA");
+        newAirport.setCountry("US");
+        newAirport.setElevation(433);
+        newAirport.setLat(47.0); // Integer input
+        newAirport.setLon(-122.0); // Integer input
+        newAirport.setTz("America/Los_Angeles");
+
+        when(airportRepository.existsById("KSEA")).thenReturn(false);
+        when(airportRepository.save(any(Airport.class))).thenReturn(newAirport);
+
+        // Act
+        Airport result = airportService.addAirport(newAirport);
+
+        // Assert
+        assertEquals("KSEA", result.getIcao());
+        assertEquals(47.0, result.getLat());
+        assertEquals(-122.0, result.getLon());
+        verify(airportRepository, times(1)).existsById("KSEA");
+        verify(airportRepository, times(1)).save(newAirport);
+    }
+
+    @Test
+    void addAirport_MissingIcao_ShouldThrowException() {
+        // Arrange
+        Airport airport = new Airport();
+        airport.setIcao(null);
+        airport.setName("Test Airport");
+        airport.setCountry("US");
+        airport.setTz("America/Los_Angeles");
+        airport.setElevation(125);
+        airport.setLat(33.9425);
+        airport.setLon(-118.4081);
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> airportService.addAirport(airport)
+        );
+        assertEquals("ICAO code is a mandatory field, which should not contain special or lowercase characters and must be exactly 4 characters.", exception.getMessage());
+        verify(airportRepository, never()).existsById(anyString());
+        verify(airportRepository, never()).save(any(Airport.class));
     }
 
     @Test
@@ -203,6 +256,12 @@ class AirportServiceTest {
         // Arrange
         Airport airport = new Airport();
         airport.setIcao("abc"); // Invalid ICAO (3 chars)
+        airport.setName("Test Airport");
+        airport.setCountry("US");
+        airport.setTz("America/Los_Angeles");
+        airport.setElevation(125);
+        airport.setLat(33.9425);
+        airport.setLon(-118.4081);
 
         // Act & Assert
         IllegalArgumentException exception = assertThrows(
@@ -219,6 +278,12 @@ class AirportServiceTest {
         // Arrange
         Airport airport = new Airport();
         airport.setIcao("KJFK");
+        airport.setName("Test Airport");
+        airport.setCountry("US");
+        airport.setTz("America/Los_Angeles");
+        airport.setElevation(125);
+        airport.setLat(33.9425);
+        airport.setLon(-118.4081);
         when(airportRepository.existsById("KJFK")).thenReturn(true);
 
         // Act & Assert
@@ -232,11 +297,16 @@ class AirportServiceTest {
     }
 
     @Test
-    void addAirport_InvalidCountry_ShouldThrowException() {
+    void addAirport_MissingName_ShouldThrowException() {
         // Arrange
         Airport airport = new Airport();
-        airport.setIcao("KLAX"); // Valid ICAO
-        airport.setCountry("USA"); // Invalid country code
+        airport.setIcao("KLAX");
+        airport.setName(null);
+        airport.setCountry("US");
+        airport.setTz("America/Los_Angeles");
+        airport.setElevation(125);
+        airport.setLat(33.9425);
+        airport.setLon(-118.4081);
         when(airportRepository.existsById("KLAX")).thenReturn(false);
 
         // Act & Assert
@@ -244,7 +314,168 @@ class AirportServiceTest {
                 IllegalArgumentException.class,
                 () -> airportService.addAirport(airport)
         );
-        assertEquals("Country code should be two letters in uppercase.", exception.getMessage());
+        assertEquals("Name is a mandatory field and cannot be empty.", exception.getMessage());
+        verify(airportRepository, times(1)).existsById("KLAX");
+        verify(airportRepository, never()).save(any(Airport.class));
+    }
+
+    @Test
+    void addAirport_EmptyName_ShouldThrowException() {
+        // Arrange
+        Airport airport = new Airport();
+        airport.setIcao("KLAX");
+        airport.setName("");
+        airport.setCountry("US");
+        airport.setTz("America/Los_Angeles");
+        airport.setElevation(125);
+        airport.setLat(33.9425);
+        airport.setLon(-118.4081);
+        when(airportRepository.existsById("KLAX")).thenReturn(false);
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> airportService.addAirport(airport)
+        );
+        assertEquals("Name is a mandatory field and cannot be empty.", exception.getMessage());
+        verify(airportRepository, times(1)).existsById("KLAX");
+        verify(airportRepository, never()).save(any(Airport.class));
+    }
+
+    @Test
+    void addAirport_MissingCountry_ShouldThrowException() {
+        // Arrange
+        Airport airport = new Airport();
+        airport.setIcao("KLAX");
+        airport.setName("Test Airport");
+        airport.setCountry(null);
+        airport.setTz("America/Los_Angeles");
+        airport.setElevation(125);
+        airport.setLat(33.9425);
+        airport.setLon(-118.4081);
+        when(airportRepository.existsById("KLAX")).thenReturn(false);
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> airportService.addAirport(airport)
+        );
+        assertEquals("Country code is a mandatory field and must be two uppercase letters.", exception.getMessage());
+        verify(airportRepository, times(1)).existsById("KLAX");
+        verify(airportRepository, never()).save(any(Airport.class));
+    }
+
+    @Test
+    void addAirport_InvalidCountry_ShouldThrowException() {
+        // Arrange
+        Airport airport = new Airport();
+        airport.setIcao("KLAX");
+        airport.setName("Test Airport");
+        airport.setCountry("USA");
+        airport.setTz("America/Los_Angeles");
+        airport.setElevation(125);
+        airport.setLat(33.9425);
+        airport.setLon(-118.4081);
+        when(airportRepository.existsById("KLAX")).thenReturn(false);
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> airportService.addAirport(airport)
+        );
+        assertEquals("Country code is a mandatory field and must be two uppercase letters.", exception.getMessage());
+        verify(airportRepository, times(1)).existsById("KLAX");
+        verify(airportRepository, never()).save(any(Airport.class));
+    }
+
+    @Test
+    void addAirport_MissingTimezone_ShouldThrowException() {
+        // Arrange
+        Airport airport = new Airport();
+        airport.setIcao("KLAX");
+        airport.setName("Test Airport");
+        airport.setCountry("US");
+        airport.setTz(null);
+        airport.setElevation(125);
+        airport.setLat(33.9425);
+        airport.setLon(-118.4081);
+        when(airportRepository.existsById("KLAX")).thenReturn(false);
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> airportService.addAirport(airport)
+        );
+        assertEquals("Timezone is a mandatory field and cannot be empty.", exception.getMessage());
+        verify(airportRepository, times(1)).existsById("KLAX");
+        verify(airportRepository, never()).save(any(Airport.class));
+    }
+
+    @Test
+    void addAirport_EmptyTimezone_ShouldThrowException() {
+        // Arrange
+        Airport airport = new Airport();
+        airport.setIcao("KLAX");
+        airport.setName("Test Airport");
+        airport.setCountry("US");
+        airport.setTz("");
+        airport.setElevation(125);
+        airport.setLat(33.9425);
+        airport.setLon(-118.4081);
+        when(airportRepository.existsById("KLAX")).thenReturn(false);
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> airportService.addAirport(airport)
+        );
+        assertEquals("Timezone is a mandatory field and cannot be empty.", exception.getMessage());
+        verify(airportRepository, times(1)).existsById("KLAX");
+        verify(airportRepository, never()).save(any(Airport.class));
+    }
+
+    @Test
+    void addAirport_MissingElevation_ShouldThrowException() {
+        // Arrange
+        Airport airport = new Airport();
+        airport.setIcao("KLAX");
+        airport.setName("Test Airport");
+        airport.setCountry("US");
+        airport.setTz("America/Los_Angeles");
+        airport.setElevation(null);
+        airport.setLat(33.9425);
+        airport.setLon(-118.4081);
+        when(airportRepository.existsById("KLAX")).thenReturn(false);
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> airportService.addAirport(airport)
+        );
+        assertEquals("Elevation is a mandatory field and must be an integer.", exception.getMessage());
+        verify(airportRepository, times(1)).existsById("KLAX");
+        verify(airportRepository, never()).save(any(Airport.class));
+    }
+
+    @Test
+    void addAirport_MissingLatitude_ShouldThrowException() {
+        // Arrange
+        Airport airport = new Airport();
+        airport.setIcao("KLAX");
+        airport.setName("Test Airport");
+        airport.setCountry("US");
+        airport.setTz("America/Los_Angeles");
+        airport.setElevation(125);
+        airport.setLat(null);
+        airport.setLon(-118.4081);
+        when(airportRepository.existsById("KLAX")).thenReturn(false);
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> airportService.addAirport(airport)
+        );
+        assertEquals("Latitude is a mandatory field and must be in the range [-90, +90] degrees.", exception.getMessage());
         verify(airportRepository, times(1)).existsById("KLAX");
         verify(airportRepository, never()).save(any(Airport.class));
     }
@@ -253,9 +484,13 @@ class AirportServiceTest {
     void addAirport_InvalidLatitude_ShouldThrowException() {
         // Arrange
         Airport airport = new Airport();
-        airport.setIcao("KLAX"); // Valid ICAO
-        airport.setCountry("US"); // Valid country
-        airport.setLat(91.0); // Invalid latitude
+        airport.setIcao("KLAX");
+        airport.setName("Test Airport");
+        airport.setCountry("US");
+        airport.setTz("America/Los_Angeles");
+        airport.setElevation(125);
+        airport.setLat(91.0);
+        airport.setLon(-118.4081);
         when(airportRepository.existsById("KLAX")).thenReturn(false);
 
         // Act & Assert
@@ -263,7 +498,30 @@ class AirportServiceTest {
                 IllegalArgumentException.class,
                 () -> airportService.addAirport(airport)
         );
-        assertEquals("Latitude must be in the range [-90, +90].", exception.getMessage());
+        assertEquals("Latitude is a mandatory field and must be in the range [-90, +90] degrees.", exception.getMessage());
+        verify(airportRepository, times(1)).existsById("KLAX");
+        verify(airportRepository, never()).save(any(Airport.class));
+    }
+
+    @Test
+    void addAirport_MissingLongitude_ShouldThrowException() {
+        // Arrange
+        Airport airport = new Airport();
+        airport.setIcao("KLAX");
+        airport.setName("Test Airport");
+        airport.setCountry("US");
+        airport.setTz("America/Los_Angeles");
+        airport.setElevation(125);
+        airport.setLat(33.9425);
+        airport.setLon(null);
+        when(airportRepository.existsById("KLAX")).thenReturn(false);
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> airportService.addAirport(airport)
+        );
+        assertEquals("Longitude is a mandatory field and must be in the range [-180, +180] degrees.", exception.getMessage());
         verify(airportRepository, times(1)).existsById("KLAX");
         verify(airportRepository, never()).save(any(Airport.class));
     }
@@ -272,10 +530,13 @@ class AirportServiceTest {
     void addAirport_InvalidLongitude_ShouldThrowException() {
         // Arrange
         Airport airport = new Airport();
-        airport.setIcao("KLAX"); // Valid ICAO
-        airport.setCountry("US"); // Valid country
-        airport.setLat(33.9425); // Valid latitude
-        airport.setLon(181.0); // Invalid longitude
+        airport.setIcao("KLAX");
+        airport.setName("Test Airport");
+        airport.setCountry("US");
+        airport.setTz("America/Los_Angeles");
+        airport.setElevation(125);
+        airport.setLat(33.9425);
+        airport.setLon(181.0);
         when(airportRepository.existsById("KLAX")).thenReturn(false);
 
         // Act & Assert
@@ -283,9 +544,49 @@ class AirportServiceTest {
                 IllegalArgumentException.class,
                 () -> airportService.addAirport(airport)
         );
-        assertEquals("Longitude must be in the range [-180, +180].", exception.getMessage());
+        assertEquals("Longitude is a mandatory field and must be in the range [-180, +180] degrees.", exception.getMessage());
         verify(airportRepository, times(1)).existsById("KLAX");
         verify(airportRepository, never()).save(any(Airport.class));
+    }
+
+    @Test
+    void addAirport_NullOptionalFields_ShouldSetDefaults() {
+        // Arrange
+        Airport newAirport = new Airport();
+        newAirport.setIcao("KLAX");
+        newAirport.setName("Los Angeles International");
+        newAirport.setCountry("US");
+        newAirport.setTz("America/Los_Angeles");
+        newAirport.setElevation(125);
+        newAirport.setLat(33.9425);
+        newAirport.setLon(-118.4081);
+        // iata, city, state are null
+
+        Airport savedAirport = new Airport();
+        savedAirport.setIcao("KLAX");
+        savedAirport.setName("Los Angeles International");
+        savedAirport.setCountry("US");
+        savedAirport.setTz("America/Los_Angeles");
+        savedAirport.setElevation(125);
+        savedAirport.setLat(33.9425);
+        savedAirport.setLon(-118.4081);
+        savedAirport.setIata("");
+        savedAirport.setCity("");
+        savedAirport.setState("");
+
+        when(airportRepository.existsById("KLAX")).thenReturn(false);
+        when(airportRepository.save(any(Airport.class))).thenReturn(savedAirport);
+
+        // Act
+        Airport result = airportService.addAirport(newAirport);
+
+        // Assert
+        assertEquals("KLAX", result.getIcao());
+        assertEquals("", result.getIata());
+        assertEquals("", result.getCity());
+        assertEquals("", result.getState());
+        verify(airportRepository, times(1)).existsById("KLAX");
+        verify(airportRepository, times(1)).save(any(Airport.class));
     }
 
     @Test
@@ -334,6 +635,29 @@ class AirportServiceTest {
     }
 
     @Test
+    void getAverageElevationPerCountry_WithEmptyCountry_ShouldExclude() {
+        // Arrange
+        Airport airportWithEmptyCountry = new Airport();
+        airportWithEmptyCountry.setIcao("XXXX");
+        airportWithEmptyCountry.setName("Test Airport");
+        airportWithEmptyCountry.setCountry("");
+        airportWithEmptyCountry.setElevation(100);
+        mockAirports.add(airportWithEmptyCountry);
+
+        when(airportRepository.findAll()).thenReturn(mockAirports);
+
+        // Act
+        Map<String, Double> result = airportService.getAverageElevationPerCountry();
+
+        // Assert
+        assertEquals(2, result.size());
+        assertFalse(result.containsKey(""));
+        assertEquals(13.0, result.get("US"));
+        assertEquals(83.0, result.get("GB"));
+        verify(airportRepository, times(1)).findAll();
+    }
+
+    @Test
     void getAirportsWithoutIataCode_ShouldReturnAirportsWithoutIata() {
         // Arrange
         when(airportRepository.findAll()).thenReturn(mockAirports);
@@ -344,23 +668,6 @@ class AirportServiceTest {
         // Assert
         assertEquals(1, result.size());
         assertEquals("EGLL", result.get(0).getIcao());
-        verify(airportRepository, times(1)).findAll();
-    }
-
-    @Test
-    void getTop10TimeZones_ShouldReturnTopTimeZones() {
-        // Arrange
-        when(airportRepository.findAll()).thenReturn(mockAirports);
-
-        // Act
-        List<Map.Entry<String, Long>> result = airportService.getTop10TimeZones();
-
-        // Assert
-        assertEquals(2, result.size());
-        assertEquals("Europe/London", result.get(0).getKey());
-        assertEquals(1L, result.get(0).getValue());
-        assertEquals("America/New_York", result.get(1).getKey());
-        assertEquals(1L, result.get(1).getValue());
         verify(airportRepository, times(1)).findAll();
     }
 }

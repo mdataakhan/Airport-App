@@ -11,7 +11,6 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -68,30 +67,39 @@ public class AirportService {
             throw new IllegalArgumentException("Airport with ICAO code '" + icao + "' already exists.");
         }
 
-        // Set default values if fields are null
+        // Putting name as a mandatory field
+        if (airport.getName() == null || airport.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Name is a mandatory field and cannot be empty.");
+        }
+
+        // Putting Country as a mandatory field
+        if (airport.getCountry() == null || !airport.getCountry().matches("^[A-Z]{2}$")) {
+            throw new IllegalArgumentException("Country code is a mandatory field and must be two uppercase letters.");
+        }
+
+        // Putting Time Zone as a mandatory field
+        if (airport.getTz() == null || airport.getTz().trim().isEmpty()) {
+            throw new IllegalArgumentException("Timezone is a mandatory field and cannot be empty.");
+        }
+
+        // Putting Elevation as a mandatory field
+        if (airport.getElevation() == null) {
+            throw new IllegalArgumentException("Elevation is a mandatory field and must be an integer.");
+        }
+
+        // Setting constraint of latitude and is mandatory
+        if (airport.getLat() == null || airport.getLat() < -90.0 || airport.getLat() > 90.0) {
+            throw new IllegalArgumentException("Latitude is a mandatory field and must be in the range [-90, +90] degrees.");
+        }
+
+        // Setting constraint of longitude and is mandatory
+        if (airport.getLon() == null|| airport.getLon() < -180.0 || airport.getLon() > 180.0) {
+            throw new IllegalArgumentException("Longitude is a mandatory field and must be in the range [-180, +180] degrees.");
+        }
+
         if (airport.getIata() == null) airport.setIata("");
-        if (airport.getName() == null) airport.setName("");
         if (airport.getCity() == null) airport.setCity("");
         if (airport.getState() == null) airport.setState("");
-        if (airport.getCountry() == null) {
-            airport.setCountry("");
-        } else if (!airport.getCountry().matches("^[A-Z]{2}$")) {
-            throw new IllegalArgumentException("Country code should be two letters in uppercase.");
-        }
-        if (airport.getTz() == null) airport.setTz("");
-        if (airport.getElevation() == null) airport.setElevation(0);
-        if (airport.getLat() == null) airport.setLat(0.0);
-        if (airport.getLon() == null) airport.setLon(0.0);
-
-        // This is to ensure latitude constraints
-        if (airport.getLat() < -90.0 || airport.getLat() > 90.0) {
-            throw new IllegalArgumentException("Latitude must be in the range [-90, +90].");
-        }
-
-        // This is to ensure longitude constraints
-        if (airport.getLon() < -180.0 || airport.getLon() > 180.0) {
-            throw new IllegalArgumentException("Longitude must be in the range [-180, +180].");
-        }
 
         return airportRepository.save(airport);
     }
