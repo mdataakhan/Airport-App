@@ -1,0 +1,302 @@
+{
+  "name": "Airport Service Project",
+  "version": "1",
+  "items": [
+    {
+      "type": "http",
+      "name": "Add New Airport",
+      "seq": 4,
+      "request": {
+        "url": "{{app_url}}/api/airports",
+        "method": "POST",
+        "headers": [],
+        "params": [],
+        "body": {
+          "mode": "json",
+          "json": " {\n    \"icao\": \"ATAA\",\n    \"iata\": \"\",\n    \"name\": \"Lowell Field\",\n    \"city\": \"Anchor Point\",\n    \"state\": \"Alaska\",\n    \"country\": \"US\",\n    \"elevation\": 450,\n    \"lat\": 59.94919968,\n    \"lon\": -151.695999146,\n    \"tz\": \"America/Anchorage\",\n    \"region\": \"US-Alaska\"\n  }",
+          "formUrlEncoded": [],
+          "multipartForm": []
+        },
+        "script": {},
+        "vars": {},
+        "assertions": [],
+        "tests": "",
+        "auth": {
+          "mode": "none"
+        }
+      }
+    },
+    {
+      "type": "http",
+      "name": "Delete By Id",
+      "seq": 5,
+      "request": {
+        "url": "{{app_url}}/api/airports/IACO",
+        "method": "DELETE",
+        "headers": [],
+        "params": [],
+        "body": {
+          "mode": "none",
+          "formUrlEncoded": [],
+          "multipartForm": []
+        },
+        "script": {},
+        "vars": {},
+        "assertions": [],
+        "tests": "",
+        "auth": {
+          "mode": "none"
+        }
+      }
+    },
+    {
+      "type": "http",
+      "name": "Filter By Name",
+      "seq": 7,
+      "request": {
+        "url": "{{app_url}}/api/airports/filter-by-name?name=dbcs",
+        "method": "GET",
+        "headers": [],
+        "params": [
+          {
+            "name": "name",
+            "value": "dbcs",
+            "type": "query",
+            "enabled": true
+          }
+        ],
+        "body": {
+          "mode": "none",
+          "formUrlEncoded": [],
+          "multipartForm": []
+        },
+        "script": {},
+        "vars": {},
+        "assertions": [],
+        "tests": "",
+        "auth": {
+          "mode": "none"
+        }
+      }
+    },
+    {
+      "type": "http",
+      "name": "Get Airport By Id",
+      "seq": 3,
+      "request": {
+        "url": "{{app_url}}/api/airports/ICAO",
+        "method": "GET",
+        "headers": [],
+        "params": [],
+        "body": {
+          "mode": "none",
+          "formUrlEncoded": [],
+          "multipartForm": []
+        },
+        "script": {},
+        "vars": {},
+        "assertions": [],
+        "tests": "",
+        "auth": {
+          "mode": "none"
+        }
+      }
+    },
+    {
+      "type": "http",
+      "name": "Get Airport List",
+      "seq": 2,
+      "request": {
+        "url": "{{app_url}}/api/airports",
+        "method": "GET",
+        "headers": [],
+        "params": [],
+        "body": {
+          "mode": "none",
+          "formUrlEncoded": [],
+          "multipartForm": []
+        },
+        "script": {},
+        "vars": {},
+        "assertions": [],
+        "tests": "",
+        "auth": {
+          "mode": "none"
+        }
+      }
+    },
+    {
+      "type": "http",
+      "name": "Get Sorted List",
+      "seq": 6,
+      "request": {
+        "url": "{{app_url}}/api/airports?sortBy=city",
+        "method": "GET",
+        "headers": [],
+        "params": [
+          {
+            "name": "sortBy",
+            "value": "city",
+            "type": "query",
+            "enabled": true
+          }
+        ],
+        "body": {
+          "mode": "none",
+          "formUrlEncoded": [],
+          "multipartForm": []
+        },
+        "script": {},
+        "vars": {},
+        "assertions": [],
+        "tests": "",
+        "auth": {
+          "mode": "none"
+        }
+      }
+    },
+    {
+      "type": "http",
+      "name": "Load Data",
+      "seq": 8,
+      "request": {
+        "url": "{{app_url}}/api/airports/load-data",
+        "method": "POST",
+        "headers": [
+          {
+            "name": "",
+            "value": "",
+            "enabled": true
+          }
+        ],
+        "params": [],
+        "body": {
+          "mode": "multipartForm",
+          "formUrlEncoded": [],
+          "multipartForm": [
+            {
+              "type": "file",
+              "name": "file",
+              "value": [
+                "/Users/I528927/Desktop/Coding Challenge 2025/airports.json"
+              ],
+              "enabled": true
+            }
+          ]
+        },
+        "script": {},
+        "vars": {},
+        "assertions": [],
+        "tests": "",
+        "auth": {
+          "mode": "none"
+        }
+      }
+    },
+    {
+      "type": "http",
+      "name": "Get Average Elevation Per Country",
+      "seq": 9,
+      "request": {
+        "url": "{{app_url}}/api/airports/average-elevation",
+        "method": "GET",
+        "headers": [],
+        "params": [],
+        "body": {
+          "mode": "none",
+          "formUrlEncoded": [],
+          "multipartForm": []
+        },
+        "script": {},
+        "vars": {},
+        "assertions": [],
+        "tests": "",
+        "auth": {
+          "mode": "none"
+        }
+      }
+    },
+    {
+      "type": "http",
+      "name": "Get Airports without IATA code",
+      "seq": 10,
+      "request": {
+        "url": "{{app_url}}/api/airports/without-iata",
+        "method": "GET",
+        "headers": [],
+        "params": [],
+        "body": {
+          "mode": "none",
+          "formUrlEncoded": [],
+          "multipartForm": []
+        },
+        "script": {},
+        "vars": {},
+        "assertions": [],
+        "tests": "",
+        "auth": {
+          "mode": "none"
+        }
+      }
+    },
+    {
+      "type": "http",
+      "name": "Get Top Time Zones",
+      "seq": 11,
+      "request": {
+        "url": "{{app_url}}/api/airports/top-timezones",
+        "method": "GET",
+        "headers": [],
+        "params": [],
+        "body": {
+          "mode": "none",
+          "formUrlEncoded": [],
+          "multipartForm": []
+        },
+        "script": {},
+        "vars": {},
+        "assertions": [],
+        "tests": "",
+        "auth": {
+          "mode": "none"
+        }
+      }
+    }
+  ],
+  "activeEnvironmentUid": "YPvW87d7TifR8xXtatUoa",
+  "environments": [
+    {
+      "variables": [
+        {
+          "name": "app_url",
+          "value": "https://airport-service.cfapps.us10-001.hana.ondemand.com",
+          "enabled": true,
+          "secret": false,
+          "type": "text"
+        }
+      ],
+      "name": "Cloud"
+    },
+    {
+      "variables": [
+        {
+          "name": "app_url",
+          "value": "http://localhost:8080",
+          "enabled": true,
+          "secret": false,
+          "type": "text"
+        }
+      ],
+      "name": "Local"
+    }
+  ],
+  "brunoConfig": {
+    "version": "1",
+    "name": "Airport Service Project",
+    "type": "collection",
+    "ignore": [
+      "node_modules",
+      ".git"
+    ]
+  }
+}
